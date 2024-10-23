@@ -2,6 +2,7 @@ import os
 import json
 import re
 import gspread
+import time
 import requests
 from openai import OpenAI
 from google.oauth2.service_account import Credentials
@@ -43,7 +44,7 @@ def read_textdata():
 def chat_gpt_return(input_data):
     client = OpenAI(api_key=chat_GPT_API_key)
     chat_completion = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o",
         messages=[{"role": "system",
                    "content": "以下に与えるメールマガジンの文章を、内容ごとに分割して出力して下さい。分割した文章には日本語で内容を要約した簡潔な見出しをつけ、見出しをkeyに、内容をvalueに持つjson形式にしてください。valueの部分は絶対に要約せず、原文のままで出力すること。質問、回答形式になっている部分については、質問と回答をセットにして一つの内容として扱ってください。その際のkeyは質問内容の要約にしてください。質問内容、回答は要約せず原文のままで書き出すこと。回答は必ずjsonのみを出力すること。"},
                   {"role": "user", "content": input_data}]
@@ -68,16 +69,17 @@ if __name__ == '__main__':
     end_index = return_text.rfind('}') + 1
     json_text = return_text[start_index:end_index]
     # テキスト内の制御文字を正規表現で削除する
-    json_text = re.sub(r'[\x00-\x1F\x7F]', '', json_text)
+    json_text_replaced = re.sub(r'[\x00-\x1F\x7F]', '', json_text)
     # JSON文字列をPythonの辞書に変換
     try:
-        json_data = json.loads(json_text)
+        json_data = json.loads(json_text_replaced)
         print("JSON部分のデータ:")
         print(json_data)
     except json.JSONDecodeError as e:
         print(f"JSONデータの解析に失敗しました: {e}")
-    dict_data = json.loads(json_text)
+    dict_data = json.loads(json_text_replaced)
     for key,value in dict_data.items():
         make_notes(key,value)
+        time.sleep(2)
 
 
